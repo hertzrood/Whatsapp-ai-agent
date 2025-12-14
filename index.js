@@ -28,3 +28,39 @@ app.get("/webhook", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running"));
+
+app.post("/webhook", async (req, res) => {
+  try {
+    const message = req.body.text || req.body.message?.text || "";
+    const from = req.body.from || req.body.sender?.id || "";
+
+    if (!message || !from) {
+      return res.status(400).send("Bad request: missing fields");
+    }
+
+    const lang = detectLanguage(message);
+    const product = findProduct(message);
+    const reply = replyText(lang, product);
+
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: from,
+        text: { body: reply }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Webhook error:", err.message);
+    res.sendStatus(500);
+  }
+});
+
