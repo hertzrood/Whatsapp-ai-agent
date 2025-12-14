@@ -1,0 +1,21 @@
+{
+  "products": [
+    {
+      "name": "Gym Tank Top",
+      "price": 25,
+      "currency": "USD",
+      "sizes": ["S", "M", "L", "XL"]
+    },
+    {
+      "name": "Women Leggings",
+      "price": 35,
+      "currency": "USD",
+      "sizes": ["S", "M", "L"]
+    },
+    {
+      "name": "Shaker Bottle",
+      "price": 15,
+      "currency": "USD"
+    }
+  ]
+}
