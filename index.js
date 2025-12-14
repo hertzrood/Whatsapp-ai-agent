@@ -6,34 +6,24 @@ const { detectLanguage, findProduct, replyText } = require("./aiAgent");
 const app = express();
 app.use(bodyParser.json());
 
+// Verification endpoint for Meta
 app.get("/webhook", (req, res) => {
-  res.send("Webhook is live");
-});
+  const VERIFY_TOKEN = "1234"; // You can choose any token, just remember it
 
-app.post("/webhook", async (req, res) => {
-  const message = req.body.text || "";
-  const from = req.body.from || "";
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
 
-  const lang = detectLanguage(message);
-  const product = findProduct(message);
-  const reply = replyText(lang, product);
-
-  await axios.post(
-    `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`,
-    {
-      messaging_product: "whatsapp",
-      to: from,
-      text: { body: reply }
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json"
-      }
+  if (mode && token) {
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      console.log("WEBHOOK VERIFIED");
+      res.status(200).send(challenge);
+    } else {
+      res.sendStatus(403);
     }
-  );
-
-  res.sendStatus(200);
+  } else {
+    res.sendStatus(400);
+  }
 });
 
 const PORT = process.env.PORT || 3000;
