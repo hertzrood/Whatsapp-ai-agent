@@ -6,9 +6,11 @@ const { detectLanguage, findProduct, replyText } = require("./aiAgent");
 const app = express();
 app.use(bodyParser.json());
 
-// Verification endpoint for Meta
+// ----------------------------
+// GET /webhook → Verification for Meta
+// ----------------------------
 app.get("/webhook", (req, res) => {
-  const VERIFY_TOKEN = "1234"; // You can choose any token, just remember it
+  const VERIFY_TOKEN = "1234"; // Use same token in Meta dashboard
 
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -26,11 +28,12 @@ app.get("/webhook", (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running"));
-
+// ----------------------------
+// POST /webhook → Handle incoming messages
+// ----------------------------
 app.post("/webhook", async (req, res) => {
   try {
+    // Safely get text & sender
     const message = req.body.text || req.body.message?.text || "";
     const from = req.body.from || req.body.sender?.id || "";
 
@@ -38,10 +41,12 @@ app.post("/webhook", async (req, res) => {
       return res.status(400).send("Bad request: missing fields");
     }
 
+    // Detect language & find product
     const lang = detectLanguage(message);
     const product = findProduct(message);
     const reply = replyText(lang, product);
 
+    // Send reply back via WhatsApp Cloud API
     await axios.post(
       `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`,
       {
@@ -64,3 +69,8 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
+// ----------------------------
+// Start Server
+// ----------------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
